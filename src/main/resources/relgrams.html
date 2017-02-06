@@ -1,0 +1,113 @@
+<html>
+<head>
+    <style type="text/css">
+        body { font-family: Helvetica, sans-serif; }
+        img { border-style: none; }
+        #box { border: 1px solid #ccc; margin: 100px auto; width: 500px;background: rgb(210, 233, 217); }
+        #box a { font-size: small; text-decoration: none; }
+        #box a:link { color: rgb(0, 93, 40); }
+        #box a:visited { color: rgb(90, 93, 90); }
+        #header { background: rgb(210, 233, 217); border: 1px solid #ccc; width: 600px }
+        #result { padding: 10px 5px;  width:1000px}
+        #rel {color: rgb(93,0,40); }
+        #arg {color: rgb(40,0,93); border: 1px; }
+        #meta { font-size: small; color: rgb(60, 100, 60); }
+        #summary { font-size: small; }
+        #page-header{margin: 5px 0; border-bottom: 10px solid #eeeeee;}
+        #debug { display: none; }
+    </style><title>rel-grams</title>
+</head>
+<body>
+<div id="page-header">
+
+    <h2>
+        <span style="padding-left:185px; padding-right:185px">Rel-grams: Relational n-grams</span>
+<!--        <a href="http://turing.cs.washington.edu/" class="pull-left"><img src="/src/main/resources/lunrlogo.png"/></a>
+        <span style="padding-left:185px; padding-right:185px">Rel-grams: Relational n-grams</span>
+        <a href="http://turing.cs.washington.edu/" class="pull-right"><img src="/lunrlogo.png"/></a> -->
+    </h2>
+</div>
+<div>
+    A Rel-gram is a pair of open-domain relational tuples (T,T'). They are analogous to lexical n-grams.
+    <ul>
+    <li>
+        Example 1: <em>A person who gets arrested is typically charged with some activity.</em>
+        <ul>
+            T = (<span style="color: blue;">police</span>, <span style="color: green;">arrest</span>, <span style="color: blue;">X:[person]</span>)
+            T' =(<span style="color: blue;">X:[person]</span>, <span style="color: green;">be charge with</span>, <span style="color: blue;">[activity]</span>)
+            <!-- #(T, T') = 7 -->
+        </ul>
+    </li>
+    <br />
+    <li>
+        Example 2: <em>A person who gets charged with some activity is followed by the person being sentenced to some time.</em>
+        <ul>
+            T = (<span style="color: blue;">X:[person]</span>, <span style="color: green;">be charge with</span>, <span style="color: blue;">[activity]</span>)
+            T' = (<span style="color: blue;">X:[person]</span>, <span style="color: green;">be sentence to</span>, <span style="color: blue;">[time]</span>)
+            <!-- #(T, T') = 28 -->
+         </ul>
+    </li>
+    </ul>
+
+    <!--table border="0">
+        <tr><td>(<span style="color: blue;">police</span>, <span style="color: green;">arrest</span>, <span style="color: blue;">X:[person]</span>)</td><td>(<span style="color: blue;">X:[person]</span>, <span style="color: green;">be charge with</span>, <span style="color: blue;">[activity]</span>)</td><td>7</td></tr>
+        <tr><td><em>A person who gets arrested is typically charged with some activity.</em></td></tr>
+        <tr><td>(<span style="color: blue;">X:[person]</span>, <span style="color: green;">be charge with</span>, <span style="color: blue;">[activity]</span>)</td><td>(<span style="color: blue;">X:[person]</span>, <span style="color: green;">be sentence to</span>, <span style="color: blue;">[time]</span>)</td><td>7</td><td></td></tr>
+    </table-->
+</div>
+<u>Downloads</u>
+<ol>
+    <li>Rel-grams data used in the EMNLP 2013 paper. Has semantic classes for arguments and specifies argument equality constraints.
+        <ul>
+        <li><a href="http://knowitall.cs.washington.edu/relgrams/relgrams.zip">relgrams.zip</a></li>
+        <li>High precision subset. [coming soon]</li>
+        </ul>
+    </li>
+    <li>Event schemas generated using the system described in the EMNLP 2013 paper.
+        <ul><li><a href="http://knowitall.cs.washington.edu/relgrams/schemas.zip">schemas.zip</a></li></ul>
+    </li>
+    <li>Older Rel-grams data used in AKBC-WEKEX 2012 paper. Has named entity types as semantic classes for arguments. Does not have argument equality.
+        <ul><li><a href="http://knowitall.cs.washington.edu/relgrams/relgrams-nyt-1.0.zip">relgrams-nyt-1.0.zip</a></li></ul>
+    </li>
+</ol>
+<u>Browse</u>
+<ul>
+    <a href="_SEARCH_URL_">Search interface</a>
+</ul>
+<div>
+    <u>Credits</u><br/>
+    The Rel-grams project is part of the on-going Event Schema Extraction project at the Stony Brook University Lunar Lab (formally at the University of Washington) in collaboration with Nate Chambers (United States Naval Academy) 
+<br/><u>Active Members</u><br/>
+    <ul>
+        <li><a href="http://www.cs.washington.edu/homes/niranjan">Dr. Niranjan Balasubramanian</a></li>
+        <li><a href="https://www.usna.edu/Users/cs/nchamber">Dr. Nate Chambers</a></li>
+        <li>Noah Weber</li>
+
+    </ul>
+
+<u>Prior Collaborators</u><br/>
+    <ul>
+        <li><a href="http://www.cs.washington.edu/homes/soderlan">Dr. Stephen Soderland</a></li>
+        <li><a href="http://www.cs.washington.edu/homes/mausam">Prof. Mausam</a></li>
+        <li><a href="http://www.cs.washington.edu/homes/etzioni">Prof. Oren Etzioni</a></li>
+    </ul>
+
+    <u>Publications</u>
+    <ul>
+        <li><a href="https://homes.cs.washington.edu/~mausam/papers/emnlp13.pdf">Generating Coherent Event Schemas at Scale</a>,
+            Niranjan Balasubramanian, Stephen Soderland, Mausam and Oren Etzioni.
+            In the proceedings of the conference on Empirical Methods in Natural Language Processing <a href="http://hum.csse.unimelb.edu.au/emnlp2013/">(EMNLP 2013)</a>.
+        </li>
+        <li><a href="http://ai.cs.washington.edu/www/media/papers/wekex12b.pdf">Rel-grams: A Probabilistic Model of Relations In Text</a>,
+            Niranjan Balasubramanian, Stephen Soderland, Mausam and Oren Etzioni.
+            In the proceedings of the Automatic Knowledge Base Construction and Web-scale Knowledge Extraction <a href="http://akbcwekex2012.wordpress.com/">(AKBC-WEKEX 2012)</a>.
+        </li>
+    </ul>
+
+</div>
+<div>
+<div id="clustrmaps-widget"></div><script type="text/javascript">var _clustrmaps = {'url' : 'http://relgrams.cs.washington.edu', 'user' : 1120743, 'server' : '2', 'id' : 'clustrmaps-widget', 'version' : 1, 'date' : '2013-11-09', 'lang' : 'en', 'corners' : 'square' };(function (){ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'http://www2.clustrmaps.com/counter/map.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);})();</script><noscript><a href="http://www2.clustrmaps.com/user/69f1119e7"><img src="http://www2.clustrmaps.com/stats/maps-no_clusters/relgrams.cs.washington.edu-thumb.jpg" alt="Locations of visitors to this page" /></a></noscript>
+
+</div>
+</body>
+</html>

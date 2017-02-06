@@ -1,0 +1,61 @@
+This directory contains Rel-grams data generated as described in Balasubramanian et al. (2013).
+The counts are extracted from 1.8 Million New York Times articles (part of the English Gigaword collection).
+
+There are two directories:
+
+1. rgc -- A set of files that provide bigram co-occurrence counts for generalized tuples (normalized Open IE relation
+tuples, with semantic classes for arguments).
+
+2. tuples -- A set of files containing unigram counts for the generalized tuples.
+
+Equality constraints:
+--------------------
+
+Sub-directory 'equality' specifies equality constraints i.e., rel-gram counts for pairs,
+where at least one of the arguments is the same. The equality constraint is marked via "XVAR" and "YVAR".
+
+
+File formats:
+-------------
+
+a) Rel-gram files: The rows in the rel-gram files contain pairs of tuples (T, T') and two sets of comma-separated counts
+that represent directed i.e., T preceding T' (T, T') and undirected co-occcurrence counts (T, T') + (T', T).
+
+Field description:
+
+Fields 1-5 contain information about the first tuple (T).
+
+1. Arg1 - Semantic class of the first actor if available. [none] indicates no semantic class was determined.
+2. Arg1 Instances - Examples instances seen for the first actor if there was a class. The lexical head otherwise.
+3. Rel - The action represented via normalized relation string.
+4. Arg2 - Semantic class of the first actor if available. [none] indicates no semantic class was determined.
+5. Arg2 Instances - Examples instances seen for the second actor if there was a class. The lexical head otherwise.
+
+6-10: Fields 6-10 contain corresponding information about the second tuple (T')
+
+11. Undirected co-occurrence counts - #k(T, T') + #k(T', T). Seven comma-separated counts corresponding to windows 1,5,10,20,30,40,50.
+12. Directed co-occurrence counts - #k(T, T'). Seven comma-separated counts corresponding to windows 1,5,10,20,30,40,50.
+
+b) Tuples files: Rows in the tuples files contain information about the individual tuples and their unigram counts.
+
+Field description:
+
+1. Arg1 - Semantic class of the first actor if available. [none] indicates no semantic class was determined.
+2. Arg1 Instances - Examples instances seen for the first actor if there was a class. The lexical head otherwise.
+3. Rel - The action represented via normalized relation string.
+4. Arg2 - Semantic class of the first actor if available. [none] indicates no semantic class was determined.
+5. Arg2 Instances - Examples instances seen for the second actor if there was a class. The lexical head otherwise.
+6. Unigram count - Number of times the tuple was observed.
+
+Contact:
+-------
+
+niranjan@cs.washington.edu
+
+
+Reference:
+----------
+
+Balasubramanian, N., Soderland, S., Mausam, Etzioni, O., Generating Coherent
+Event Schemas at Scale. In proceedings of the conference on Empirical Methods
+in Natural Language Processing, Seattle, 2013.

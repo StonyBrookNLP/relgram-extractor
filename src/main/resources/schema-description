@@ -1,0 +1,36 @@
+This directory contains the top 3000 schemas produced by the system described
+in Balasubramanian et al., (2013).
+
+1. schemas-top1000.txt
+2. schemas-1001-2000.txt
+3. schemas-2001-3000.txt
+
+
+The schemas are represented as a set of (Actor, Relation, Actor) tuples.
+Each file contains numbered schemas containing upto 6 top tuples per
+schema.
+
+Column description:
+runid - Default identifier
+schemaid - Identifier ordering the schemas in terms of quality within the file.
+Arg1 Instances - Examples instances seen for the first actor if there was a class. The lexical head otherwise.
+Arg1 - Semantic class of the first actor if available. [none] indicates no semantic class was determined.
+Rel - The action represented via normalized relation string.
+Arg2 - Semantic class of the first actor if available. [none] indicates no semantic class was determined.
+Arg2 Instances - Examples instances seen for the second actor if there was a class. The lexical head otherwise.
+
+Ordering:
+
+The schemas are ordered according to the scores assigned by the system. The
+scores themselves are not provided.
+
+Contact:
+
+niranjan@cs.washington.edu
+
+Reference:
+
+Balasubramanian, N., Soderland, S., Mausam, Etzioni, O., Generating Coherent
+Event Schemas at Scale. In proceedings of the conference on Empirical Methods
+in Natural Language Processing, Seattle, 2013.
+
