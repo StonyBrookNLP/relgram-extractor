@@ -21,6 +21,7 @@ import utils.StringUtils
 
 object TuplesDocumentGenerator{
 
+  
   def trimDocument(indocument:TuplesDocument, maxLength:Int) = new TuplesDocument(indocument.docid, pruneLongSentences(indocument, maxLength))
   def pruneLongSentences(indocument: TuplesDocument, maxLength:Int=75): Seq[TypedTuplesRecord] = {
     indocument.tupleRecords.filter(x => {
@@ -547,6 +548,38 @@ object CorefDocumentTester{
     })
 
   }
+}
+
+
+object TuplesAppDataTester{
+    def main(args:Array[String]){
+        val infile = args(0)
+        var offset = 0
+        var previd = 0 //previous sentence id
+        var prevlength = -1 //length of the previous sentence
+        def curr_offset(curr_line:String, currid:Int) = { //increase offset by length of previous line, if we are at a new sentence
+            prevlength = if(prevlength == -1) curr_line.length else prevlength   //if on first sentence set prevlength
+            if(previd == currid){ //same sentence, same offset
+                offset
+            }
+            else {  //different sentence, update offset and prevlength, previd
+                offset += prevlength
+                previd = currid
+                prevlength = curr_line.length
+                offset
+            }
+        }
+        val tuplesData = Source.fromFile(infile).getLines().map(line => {TuplesAppDataGenerator.fromString(line) match {   //Map from string to TuplesAppData to TypedTuplesRecord
+                                                                            case Some(tupledata:TuplesAppData) => tupledata
+                                                                            case None => TuplesAppData("NA", -1, "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA") 
+                                                                        }})
+                                                           .map(tupledata => TypedTuplesRecordGenerator.fromTuplesAppData(tupledata, curr_offset(tupledata.sentence, tupledata.sentid)))
+
+        tuplesData.foreach(td => {
+            println(td.toString())
+        })
+                               
+    }
 }
 
 object CorefDocumentDebugger2{

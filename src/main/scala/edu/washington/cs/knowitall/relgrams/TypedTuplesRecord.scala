@@ -24,7 +24,7 @@ case class TuplesAppData(docid:String, sentid:Int, sentence:String, arg1:String,
         arg1types:String, rel:String, relhead:String, arg2:String, arg2head:String, arg2types:String) {
     
         override def toString:String = {
-            "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s".format(docid, sentid, sentence, arg1, arg1head, arg1types, rel, relhead, arg2, arg2head, arg2types)
+            "%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s".format(docid, sentid, sentence, arg1, arg1head, arg1types, rel, relhead, arg2, arg2head, arg2types)
         }
     
     }
@@ -32,7 +32,7 @@ case class TuplesAppData(docid:String, sentid:Int, sentence:String, arg1:String,
 
 //Return a RelgramTuplesAppData from a string obtained via relgramtuples-app program
 object TuplesAppDataGenerator{
-    val sep = "|"
+    val sep = '|'
     val size = 11
 
     def fromString(str:String):Option[TuplesAppData] = {
@@ -47,15 +47,60 @@ object TuplesAppDataGenerator{
     }
 }
 
-//class to convert a sentence (in plain text form) into a TypedTuplesRecord with the given id values
-//
-/*object TypedTuplesGenerator{
+//class to convert a TuplesAppData sentence into a TypedTuplesRecord 
+
+
+/*case class TypedTuplesRecord(docid:String, sentid:Int, sentence:String, extrid:Int, hashes:Set[Int],
+                             arg1:String, arg1Interval:Interval, rel:String, relInterval:Interval, arg2:String, arg2Interval:Interval,
+                             arg1Head:String, arg1HeadInterval:Interval, var relHead:String, var relHeadInterval:Interval, arg2Head:String, arg2HeadInterval:Interval,
+                             arg1Types:Seq[String], arg2Types:Seq[String],
+                             confidence:Double){ */
+
+
+object TypedTuplesRecordGenerator{
     
-    def stringToTypedTuplesRecord(sentence:String, docid:Int, id:Int, extId
+    //start pos indicates the charecter offset of the sentence (where in the document it starts), used for calculating the spans for the arguments
+    def fromTuplesAppData(data:TuplesAppData, startpos:Int, extrid:Int = 0, conf:Double = -1.0):TypedTuplesRecord = {
+        val arg1types = data.arg1types.split(',') 
+        val arg2types = data.arg2types.split(',') 
+        val arg1Interval = getSpan(data.sentence, data.arg1, startpos)
+        val arg1HeadInterval = arg1Interval
+        val arg2Interval = getSpan(data.sentence, data.arg2, startpos)
+        val arg2HeadInterval = arg2Interval
+        val relInterval = getSpan(data.sentence, data.rel, startpos)
+        val relHeadInterval = relInterval
+        val hashes = sentenceHashes(data.sentence).toSet
 
-}*/
+        TypedTuplesRecord(data.docid, data.sentid, data.sentence, extrid, hashes, data.arg1,  arg1Interval, data.rel, relInterval, data.arg2, arg2Interval,
+                          data.arg1head, arg1HeadInterval, data.relhead, relHeadInterval, data.arg2head, arg2HeadInterval, arg1types, arg2types, conf)
 
+    }
 
+    def getSpan(sentence:String, arg:String, startpos:Int):Interval = {
+        val index = sentence.indexOfSlice(arg)
+        index match {
+            case -1 => {
+                println("Could not find string %s in sentence %s".format(arg, sentence))
+                Interval.open(0,0)
+            }
+            case _ => {
+                val start = index + startpos
+                val end = start + arg.length
+                Interval.open(start, end)
+            }
+        }
+
+    }
+
+    def sentenceHashes(insentence:String) = {
+        val delims = "[.,!?:;]+"
+        val sentence = insentence.toLowerCase()
+        val sentenceHashCode = sentence.replaceAll("[^a-zA-Z0-9]", "").hashCode
+        sentenceHashCode::Nil ++ sentence.split(delims).filter(split => split.split(" ").size >= 5).map(split => split.replaceAll("[^a-zA-Z0-9]", "").hashCode)
+    }
+}
+
+//end new code
 object TypedTuplesRecord{
 
   val wire = TypedTuplesRecord.TypedTuplesRecordFmt

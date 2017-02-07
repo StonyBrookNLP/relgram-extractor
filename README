@@ -1,0 +1,7 @@
+relgram-extractor
+
+The middle part of a pipeline to go from plain news text to learned event schemas.
+This part of the pipeline takes in relation tuples extracted from the first part of the pipeline,
+finds coreference information, and outputs relgram counts.
+
+This README will be updated to be more useful in the near future. We promise. 
