@@ -19,6 +19,43 @@ import utils.StringUtils
  */
 
 
+//Holds the infomation obtained from the output of relgramtuples-app program, see that programs README for detail
+case class TuplesAppData(docid:String, sentid:Int, sentence:String, arg1:String, arg1head:String, 
+        arg1types:String, rel:String, relhead:String, arg2:String, arg2head:String, arg2types:String) {
+    
+        override def toString:String = {
+            "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s".format(docid, sentid, sentence, arg1, arg1head, arg1types, rel, relhead, arg2, arg2head, arg2types)
+        }
+    
+    }
+        
+
+//Return a RelgramTuplesAppData from a string obtained via relgramtuples-app program
+object TuplesAppDataGenerator{
+    val sep = "|"
+    val size = 11
+
+    def fromString(str:String):Option[TuplesAppData] = {
+        val splits = str.split(sep)
+        if(splits.size >= size) {
+            Some(TuplesAppData(splits(0), splits(1).toInt, splits(2), splits(3), splits(4), splits(5), splits(6), splits(7), splits(8), splits(9), splits(10)))
+        }
+        else {
+            println("TuplesAppDataGenerator: Splits less than %s".format(size))
+            None
+        }
+    }
+}
+
+//class to convert a sentence (in plain text form) into a TypedTuplesRecord with the given id values
+//
+/*object TypedTuplesGenerator{
+    
+    def stringToTypedTuplesRecord(sentence:String, docid:Int, id:Int, extId
+
+}*/
+
+
 object TypedTuplesRecord{
 
   val wire = TypedTuplesRecord.TypedTuplesRecordFmt
