@@ -30,44 +30,35 @@ case class TuplesAppData(docid:String, sentid:Int, sentence:String, arg1:String,
     }
         
 
-//Return a RelgramTuplesAppData from a string obtained via relgramtuples-app program
+//Return a TuplesAppData from a string obtained via relgramtuples-app program
 object TuplesAppDataGenerator{
-    val sep = '|'
+    val sep = "\\|" 
     val size = 11
+    val logger = LoggerFactory.getLogger(this.getClass)
 
     def fromString(str:String):Option[TuplesAppData] = {
-        val splits = str.split(sep)
+        val splits = str.split(sep, -1)
         if(splits.size >= size) {
             Some(TuplesAppData(splits(0), splits(1).toInt, splits(2), splits(3), splits(4), splits(5), splits(6), splits(7), splits(8), splits(9), splits(10)))
         }
         else {
-            println("TuplesAppDataGenerator: Splits less than %s".format(size))
+            logger.error("Splits less than %s".format(size))
             None
         }
     }
 }
 
 //class to convert a TuplesAppData sentence into a TypedTuplesRecord 
-
-
-/*case class TypedTuplesRecord(docid:String, sentid:Int, sentence:String, extrid:Int, hashes:Set[Int],
-                             arg1:String, arg1Interval:Interval, rel:String, relInterval:Interval, arg2:String, arg2Interval:Interval,
-                             arg1Head:String, arg1HeadInterval:Interval, var relHead:String, var relHeadInterval:Interval, arg2Head:String, arg2HeadInterval:Interval,
-                             arg1Types:Seq[String], arg2Types:Seq[String],
-                             confidence:Double){ */
-
-
 object TypedTuplesRecordGenerator{
     
-    //start pos indicates the charecter offset of the sentence (where in the document it starts), used for calculating the spans for the arguments
-    def fromTuplesAppData(data:TuplesAppData, startpos:Int, extrid:Int = 0, conf:Double = -1.0):TypedTuplesRecord = {
+    def fromTuplesAppData(data:TuplesAppData, extrid:Int, conf:Double = -1.0):TypedTuplesRecord = {
         val arg1types = data.arg1types.split(',') 
         val arg2types = data.arg2types.split(',') 
-        val arg1Interval = getSpan(data.sentence, data.arg1, startpos)
-        val arg1HeadInterval = arg1Interval
-        val arg2Interval = getSpan(data.sentence, data.arg2, startpos)
+        val arg1Interval = getSpan(data.sentence, data.arg1)
+        val arg1HeadInterval = arg1Interval   //use the same intervals
+        val arg2Interval = getSpan(data.sentence, data.arg2)
         val arg2HeadInterval = arg2Interval
-        val relInterval = getSpan(data.sentence, data.rel, startpos)
+        val relInterval = getSpan(data.sentence, data.rel)
         val relHeadInterval = relInterval
         val hashes = sentenceHashes(data.sentence).toSet
 
@@ -76,20 +67,24 @@ object TypedTuplesRecordGenerator{
 
     }
 
-    def getSpan(sentence:String, arg:String, startpos:Int):Interval = {
-        val index = sentence.indexOfSlice(arg)
+    //get the charecter offset range of a word in a sentence. Offsets are relative to the start of the sentence
+    def getSpan(sentence:String, arg:String):Interval = {
+        val substring = longestCommonSubstring(sentence, arg.trim) //substrings might not be exactly the same due to processing of args etc
+
+     //   val index = sentence.indexOfSlice(arg)
+        val index = sentence.indexOfSlice(substring)
+
         index match {
             case -1 => {
-                println("Could not find string %s in sentence %s".format(arg, sentence))
+                println("Could not find string <%s> in sentence:<%s>".format(arg, sentence))
                 Interval.open(0,0)
             }
             case _ => {
-                val start = index + startpos
-                val end = start + arg.length
+                val start = index
+                val end = start + substring.length
                 Interval.open(start, end)
             }
-        }
-
+        } 
     }
 
     def sentenceHashes(insentence:String) = {
@@ -98,7 +93,40 @@ object TypedTuplesRecordGenerator{
         val sentenceHashCode = sentence.replaceAll("[^a-zA-Z0-9]", "").hashCode
         sentenceHashCode::Nil ++ sentence.split(delims).filter(split => split.split(" ").size >= 5).map(split => split.replaceAll("[^a-zA-Z0-9]", "").hashCode)
     }
+
+    def longestCommonSubstring(s1:String,s2:String):String =
+    //This is a modified version of the code found on wikiboks.org/wiki/Algorithm_IMplementation/Strings/Longest_common_substring
+    {
+        var Start = 0
+        var Max = 0
+        for (i <- 0 until s1.length)
+        {
+            for (j <- 0 until s2.length)
+            {
+                var x = 0
+                var break = false
+                while (!break && s1.charAt(i + x) == s2.charAt(j + x))
+                {
+                    x += 1
+                    if (((i + x) >= s1.length()) || ((j + x) >= s2.length())) break = true;
+                }
+                if (x > Max)
+                {
+                    Max = x;
+                    Start = i;
+                }
+             }
+        }
+        return s1.substring(Start, (Start + Max));
+    }
 }
+
+
+
+
+
+
+
 
 //end new code
 object TypedTuplesRecord{

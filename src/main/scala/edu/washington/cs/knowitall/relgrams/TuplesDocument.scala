@@ -354,7 +354,6 @@ object TuplesDocumentWithCorefMentions{
   val logger = LoggerFactory.getLogger(this.getClass)
   def fromString(tdmString: String): Option[TuplesDocumentWithCorefMentions] = {
     val splits = tdmString.split(tdocsep)
-    println(splits(0))
     if (splits.size >= 1){
       TuplesDocument.fromString(splits(0)) match {
         case Some(tuplesDocument:TuplesDocument) => {
@@ -551,38 +550,59 @@ object CorefDocumentTester{
 }
 
 
-object TuplesAppDataTester{
-    def main(args:Array[String]){
-        val infile = args(0)
-        var offset = 0
-        var previd = 0 //previous sentence id
-        var prevlength = -1 //length of the previous sentence
-        def curr_offset(curr_line:String, currid:Int) = { //increase offset by length of previous line, if we are at a new sentence
-            prevlength = if(prevlength == -1) curr_line.length else prevlength   //if on first sentence set prevlength
-            if(previd == currid){ //same sentence, same offset
-                offset
-            }
-            else {  //different sentence, update offset and prevlength, previd
-                offset += prevlength
-                previd = currid
-                prevlength = curr_line.length
-                offset
-            }
-        }
-        val tuplesData = Source.fromFile(infile).getLines().map(line => {TuplesAppDataGenerator.fromString(line) match {   //Map from string to TuplesAppData to TypedTuplesRecord
-                                                                            case Some(tupledata:TuplesAppData) => tupledata
-                                                                            case None => TuplesAppData("NA", -1, "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA") 
-                                                                        }})
-                                                           .map(tupledata => TypedTuplesRecordGenerator.fromTuplesAppData(tupledata, curr_offset(tupledata.sentence, tupledata.sentid)))
+/*
+    Given output of the Tuple Extractor, output the TupleDocument data 
+    This output can be used as input to CoreferenceTuples in order to add coref information to the tuples
+*/
 
-        tuplesData.foreach(td => {
-            println(td.toString())
+object TuplesAppDataTester{
+    val logger = LoggerFactory.getLogger(this.getClass)
+    def main(args:Array[String]){
+    
+        val directory = new File(args(0))
+        val outfile= args(1) //document to write to 
+        val writer = new PrintWriter(outfile, "utf-8")
+        var output = ""
+        var curr_extrid = -1
+        directory.listFiles.foreach(infile => {  
+
+            var offset = 0
+            var previd = 0 //previous sentence id
+            var prevlength = -1 //length of the previous sentence
+
+            def toTuplesAppData(line:String):TuplesAppData = {
+                TuplesAppDataGenerator.fromString(line) match {   
+                    case Some(tupledata:TuplesAppData) => tupledata
+                    case None => {
+                            logger.error("Something horrible went wrong processing the string <%s>".format(line))
+                            TuplesAppData("NA", -1, "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA") 
+                        }
+                }
+            }
+
+            def getExtrId:Int = {
+                curr_extrid += 1
+                curr_extrid
+            }
+
+            //get all the TypedTupleRecords from the document
+            val tuplesData = Source.fromFile(infile).getLines().map(line => toTuplesAppData(line)) //Map from string to TuplesAppData to TypedTuplesRecord
+                                                               .map(tupledata => TypedTuplesRecordGenerator.fromTuplesAppData(tupledata, getExtrId))
+
+            val tuplesList = tuplesData.toList
+            val docid = if(!tuplesList.isEmpty) tuplesList(0).docid else -1
+            writer.println(docid + TuplesDocument.docidsep + tuplesList.mkString(TuplesDocument.recsep))
         })
                                
+        writer.close
     }
 }
 
-object CorefDocumentDebugger2{
+/*
+    Take in a Tuples Document and add Coref information (TuplesDocumentWithCoreference)
+    This can be used as output to RelgramsLocalApp in order to generate counts information for Relgrams
+*/
+object CoreferenceTuples{ //object for getting coreference from Tuples Document
     //Take in Tuples document
   val logger = LoggerFactory.getLogger(this.getClass)
   def main(args:Array[String]){
@@ -596,9 +616,9 @@ object CorefDocumentDebugger2{
     
     tupleDocuments.foreach(td =>  {
         val doc = tgen.getTuplesDocumentWithCorefMentionsBlocks(td, maxLength = 75) 
-        writer.println(doc.toString)
-        println(doc.toString)
+        writer.println(doc.get.toString)
 
       })
+      writer.close
     }
 }
