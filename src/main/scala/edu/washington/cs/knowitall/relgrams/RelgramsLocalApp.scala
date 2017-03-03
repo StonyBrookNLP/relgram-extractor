@@ -7,6 +7,7 @@ package edu.washington.cs.knowitall.relgrams
  * Time: 11:02 AM
  * To change this template use File | Settings | File Templates.
  */
+
 import org.slf4j.LoggerFactory
 import scopt.mutable.OptionParser
 import io.Source
@@ -69,6 +70,7 @@ object RelgramsLocalApp {
   def loadTupleDocuments(inputPath:String) = {
     Source.fromFile(inputPath).getLines().flatMap(x => TuplesDocumentWithCorefMentions.fromString(x)).toSeq
   }
+
   def extractRelgramCountsAndTuples(tuplesDocuments: Seq[TuplesDocumentWithCorefMentions], maxSentenceLength:Int, equality:Boolean, noequality:Boolean): Seq[(Map[String, RelgramCounts], Map[String, RelationTupleCounts])] ={
     tuplesDocuments.flatMap(document => {
       val docid = document.tuplesDocument.docid

@@ -216,6 +216,7 @@
                     <jvmArgs>
                         <jvmArg>-Xms64m</jvmArg>
                         <jvmArg>-Xmx1024m</jvmArg>
+                 <!--       <jvmArg>-XX:-UseConcMarkSweepGC</jvmArg>   -->
                     </jvmArgs>
                     <executions>
                         <execution>
@@ -250,6 +251,7 @@
                     </connectors>
                 </configuration>
             </plugin>
+
 
             <plugin>
                 <artifactId>maven-eclipse-plugin</artifactId>
