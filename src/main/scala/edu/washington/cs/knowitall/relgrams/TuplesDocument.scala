@@ -551,7 +551,7 @@ object CorefDocumentTester{
 
 
 /*
-    Given output of the Tuple Extractor, output the TupleDocument data 
+    Given output of the Tuple Extractor (which should be a directory of tuple documents), output the TupleDocument data 
     This output can be used as input to CoreferenceTuples in order to add coref information to the tuples
 */
 

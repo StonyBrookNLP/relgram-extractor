@@ -7,11 +7,13 @@
 from relgramtuple import RelgramTuple, RelgramReader
 import numpy as np
 import sys
+import pickle
 import os
+import json
 
 class RelgramCounter:
     'Finds and stores relgram statistics for a set of given windows'
-    #relgram_args mapsstring form of tuples to a 2-tuple of dicts, each dict mapping argument instance to argument count (either for first or second argument position)
+    #relgram_args mapsstring form of relation tuple strings concatenated by a |, to a 4-tuple of a dicts containing mappings from argument instance to counts (rel1arg1, rel1arg2, rel2arg1, rel2arg2)
     def __init__(self, windows, include_generalized = True, relgram_map = {}, relgram_args = {}):
         """
         k-tuple windows - Whiche windows to calulate relgram statistics for,
@@ -109,7 +111,8 @@ class RelgramCounter:
                         for other in other_gen_tuples:
                             other_str_tup = other.getString()
                             if other_str_tup not in stat_map: #init to ktuple of zeros if not in
-                                stat_map[other_str_tup] = np.zeros(len(self.windows), dtype=np.int)
+#                                stat_map[other_str_tup] = np.zeros(len(self.windows), dtype=np.int)
+                                stat_map[other_str_tup] = [0]*len(self.windows)
                             #increament each statistic by one that is greater than the current window
                             #ie if something comes in a window of 2 than it counts also in a window within 3, etc
                             stats = stat_map[other_str_tup]
@@ -130,29 +133,44 @@ class RelgramCounter:
 
         return np.zeros(len(self.windows))
         
-    def getInstanceString(self, rel):
+    def getInstanceString(self, rel1, rel2):
         """
         Print out the argument instances in a format readable by relgraphs application
+        Return tuple (rel1 args, rel2 args) where each are the string form of each relations arguments in a form 
+        readable by relgraphs application
         """
         ESEP = "_ESEP_"
         CSEP = "_CSEP_"
-        arg1_instances = ""
-        arg2_instances = ""
-        if rel not in self.relgram_args:
+        rel1arg1_instances = ""
+        rel1arg2_instances = ""
+        rel2arg1_instances = ""
+        rel2arg2_instances = ""
+
+        relgram = rel1+"|"+rel2
+        if relgram not in self.relgram_args:
             return ""
         else:
-            instances = self.relgram_args[rel]
+            instances = self.relgram_args[relgram]
 
         for ents in instances[0].items():
-            arg1_instances += ESEP + CSEP.join((str(x) for x in ents)) 
+            rel1arg1_instances += ESEP + CSEP.join((str(x) for x in ents)) 
 
         for ents in instances[1].items():
-            arg2_instances += ESEP + CSEP.join((str(x) for x in ents)) 
+            rel1arg2_instances += ESEP + CSEP.join((str(x) for x in ents)) 
+
+        for ents in instances[2].items():
+            rel2arg1_instances += ESEP + CSEP.join((str(x) for x in ents)) 
+
+        for ents in instances[3].items():
+            rel2arg2_instances += ESEP + CSEP.join((str(x) for x in ents)) 
 
 
-        arg1_instances = arg1_instances[len(ESEP):]
-        arg2_instances = arg2_instances[len(ESEP):]
-        return arg1_instances + '\t' + arg2_instances
+        rel1arg1_instances = rel1arg1_instances[len(ESEP):]
+        rel1arg2_instances = rel1arg2_instances[len(ESEP):]
+        rel2arg1_instances = rel2arg1_instances[len(ESEP):]
+        rel2arg2_instances = rel2arg2_instances[len(ESEP):]
+
+        return (rel1arg1_instances + '\t' + rel1arg2_instances, rel2arg1_instances + '\t' + rel2arg2_instances)
             
 
 class RelgramCounterReader:
@@ -197,19 +215,23 @@ class RelgramCounterReader:
         return li
 
 
-    def updateArgCounts(self, relgram_args, rel, arg1, arg2):
+    def updateArgCounts(self, relgram_args, rel1, rel2, rel1arg1, rel1arg2, rel2arg1, rel2arg2):
         """
-        Update the arg counts for the given rel  where arg1 and arg2 are strings 
+        Update the arg counts for the given relgram  where rel1arg1,..., are strings
         """
         ESEP = "_ESEP_"
         CSEP = "_CSEP_"
-        arg1_ents = arg1.split(ESEP)
-        arg2_ents = arg2.split(ESEP)
-        if rel not in relgram_args:
-            relgram_args[rel] = ({}, {})
+        rel1arg1_ents = rel1arg1.split(ESEP)
+        rel1arg2_ents = rel1arg2.split(ESEP)
+        rel2arg1_ents = rel2arg1.split(ESEP)
+        rel2arg2_ents = rel2arg2.split(ESEP)
 
-        instances = relgram_args[rel]
-        for ent_counts in arg1_ents:
+        relgram = rel1 + "|" + rel2
+        if relgram not in relgram_args:
+            relgram_args[relgram] = [{}, {}, {}, {}]
+
+        instances = relgram_args[relgram]
+        for ent_counts in rel1arg1_ents:
             split = ent_counts.split(CSEP)
             ent = split[0]
             count = int(split[1])
@@ -218,7 +240,7 @@ class RelgramCounterReader:
             else:
                 instances[0][ent] += count
             
-        for ent_counts in arg2_ents:
+        for ent_counts in rel1arg2_ents:
             split = ent_counts.split(CSEP)
             ent = split[0]
             count = int(split[1])
@@ -227,6 +249,25 @@ class RelgramCounterReader:
             else:
                 instances[1][ent] += count
 
+        for ent_counts in rel2arg1_ents:
+            split = ent_counts.split(CSEP)
+            ent = split[0]
+            count = int(split[1])
+            if ent not in instances[2]:
+                instances[2][ent] = count
+            else:
+                instances[2][ent] += count
+
+        for ent_counts in rel2arg2_ents:
+            split = ent_counts.split(CSEP)
+            ent = split[0]
+            count = int(split[1])
+            if ent not in instances[3]:
+                instances[3][ent] = count
+            else:
+                instances[3][ent] += count
+
+        
         return relgram_args
 
 
@@ -241,7 +282,10 @@ class RelgramCounterReader:
         RG_SEP = "_RG_SEP_"
         RGC_SEP = "_RGC_SEP_"
         with open(filename, 'r') as infile:
+            pp = 0
             for line in infile:
+                print(pp)
+                pp +=1
                 first_split = line.split(RG_SEP)
                 second_split = first_split[1].split(RGC_SEP)
 
@@ -261,8 +305,9 @@ class RelgramCounterReader:
                 rel2_arg1 = rel2_splits[6]
                 rel2_arg2 = rel2_splits[7]
 
-                relgram_args = self.updateArgCounts(relgram_args, rel1, rel1_arg1, rel1_arg2)
-                relgram_args = self.updateArgCounts(relgram_args, rel2, rel2_arg1, rel2_arg2)
+                
+                relgram_args = self.updateArgCounts(relgram_args, rel1, rel2,  rel1_arg1, rel1_arg2, rel2_arg1, rel2_arg2)
+               # relgram_args = self.updateArgCounts(relgram_args, rel2, rel2_arg1, rel2_arg2)
 #                if rel1 not in relgram_args:
 #                    relgram_args[rel1] = [rel1_arg1, rel1_arg2]
 #                elif relgram_args[rel1] != [rel1_arg1, rel1_arg2]:
@@ -283,7 +328,8 @@ class RelgramCounterReader:
 
 
                 if rel2 not in stat_map: #init to ktuple of zeros if not in
-                    stat_map[rel2] = np.zeros(maxWindow, dtype=np.int)
+                    #stat_map[rel2] = np.zeros(maxWindow, dtype=np.int)
+                    stat_map[rel2] = [0]*maxWindow
 
                 stats = stat_map[rel2]
                 #countdata = splits[8].split(',')
@@ -333,4 +379,10 @@ class RelgramCounterReader:
         return RelgramCounter(list(range(1,maxWindow+1)), True, relgram_map)
 
 
-
+if __name__ == "__main__":
+    directory = sys.argv[1]
+    pfile = sys.argv[2]
+    counter = RelgramCounterReader()
+    reader = counter.fromRelgramCountData(directory)
+    #pickle.dump(reader, open(pfile, 'wb'))
+    json.dump((reader.relgram_map, reader.relgram_args), open(pfile, 'w'))

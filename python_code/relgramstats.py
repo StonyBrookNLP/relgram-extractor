@@ -1,12 +1,14 @@
 ################################################
 #   RelgramStats 
 #   Methods for calculating varioius statistics
-#   given relgram count data (a RelgramCounter)
-#   Use for calculating conditional probabilities
+#   given relgram count data (a RelgramCounter) #   Use for calculating conditional probabilities
 #   and symettric conditional probabilities
 ################################################
 from relgramcounter import RelgramCounter, RelgramCounterReader
 from relgramtuple import RelgramTuple
+import pickle
+import sys
+import json
 
 
 def windowConditionalProb(counter, t2, t1, k, delta=0.05):
@@ -71,18 +73,38 @@ def getTopK(counter, tup, k=25):
     """
     adj_list = [] #list of tuples that co occur with tup at least once
     for t in counter.relgram_map[tup]:
-        adj_list.append(t) #add all that appear after tup
+        adj_list.append((tup, t)) #add all that appear after tup
 
 
     for i in counter.relgram_map: #find any that appear before tup
         for j in counter.relgram_map[i]:
             if j == tup and i not in adj_list: 
-                adj_list.append(i)
+                adj_list.append((i, tup))
 
-    scores = [(t, SCP(counter, t, tup)) for t in adj_list] 
+    scores = [(x, SCP(counter, x[0], x[1])) for x in adj_list] 
     return sorted(scores, key=lambda x: x[1], reverse=True)
 
-    
+
+
+#def getTopK(counter, tup, k=25):
+#    """
+#    Return a list of k tuples (string, doulbe) containing the tuples
+#    (string form) closest to 
+#    tup (in string form) tup, as well as the SCP between them
+#    """
+#    adj_list = [] #list of tuples that co occur with tup at least once
+#    for t in counter.relgram_map[tup]:
+#        adj_list.append(t) #add all that appear after tup
+#
+#
+#    for i in counter.relgram_map: #find any that appear before tup
+#        for j in counter.relgram_map[i]:
+#            if j == tup and i not in adj_list: 
+#                adj_list.append(i)
+#
+#    scores = [(t, SCP(counter, t, tup)) for t in adj_list] 
+#    return sorted(scores, key=lambda x: x[1], reverse=True)
+
 def printTop(counter, tup, filename, twohop=False, k=25):
     sep = "_NSEP_"
     top = getTopK(counter, tup)
@@ -91,25 +113,87 @@ def printTop(counter, tup, filename, twohop=False, k=25):
         tab_tup = tup.replace('|', '\t')
 
 #        tab_tup_wargs = tab_tup + '\t0\t\tNONE\t' + '\t'.join(counter.relgram_args[tup])
-        tab_tup_wargs = tab_tup + '\t0\t\tNONE\t' + counter.getInstanceString(tup)
+#        tab_tup_wargs = tab_tup + '\t0\t\tNONE\t' + counter.getInstanceString(tup)
         outfile.write("seed" + sep + tab_tup + "\n")
 
         for i in top:
             relgram = i[0]
+            instances = counter.getInstanceString(relgram[0], relgram[1])
+            print(instances)
+            tup1_args = instances[0]
+            tup2_args = instances[1]
             scp = i[1]
-            outfile.write("onehop{}{}{}{}{}{}\n".format(sep, tab_tup_wargs, sep, relgram.replace('|', '\t') + '\t0\t\tNONE\t' + counter.getInstanceString(relgram), sep, scp))
+            tup1 = relgram[0]
+            tup2 = relgram[1]
+
+            tab_tup1_wargs = tup1.replace('|','\t') + '\t0\t\tNONE\t' + tup1_args
+            tab_tup2_wargs = tup2.replace('|','\t') + '\t0\t\tNONE\t' + tup2_args
+
+            outfile.write("onehop{}{}{}{}{}{}\n".format(sep, tab_tup1_wargs, sep, tab_tup2_wargs, sep, scp))
         if twohop:
             for i in top[:k]:
-                tup_twohop = i[0]
-                #if tup_twohop in counter.relgram_map: #make sure this tuple has outgoing nodes
-                top_twohop = getTopK(counter, tup_twohop)
-                tab_tup_twohop = tup_twohop.replace('|', '\t')
-                tab_tup_twohop_wargs = tab_tup_twohop + '\t0\t\tNONE\t' + counter.getInstanceString(tup_twohop)
-                for i in top_twohop:
+                if i[0][1] != tup:
+                    tup_twohop = i[0][1]
+                else:
+                    tup_twohop = i[0][0]
+
+
+                top = getTopK(counter, tup_twohop)
+                for i in top:
                     relgram = i[0]
+                    instances = counter.getInstanceString(relgram[0], relgram[1])
+                    tup1_args = instances[0]
+                    tup2_args = instances[1]
                     scp = i[1]
-                    if relgram != tup:
-                        outfile.write("twohop{}{}{}{}{}{}\n".format(sep, tab_tup_twohop_wargs, sep, relgram.replace('|', '\t') + '\t0\t\tNONE\t' + counter.getInstanceString(relgram), sep, scp))
+                    tup1 = relgram[0]
+                    tup2 = relgram[1]
+
+                    tab_tup1_wargs = tup1.replace('|','\t') + '\t0\t\tNONE\t' + tup1_args
+                    tab_tup2_wargs = tup2.replace('|','\t') + '\t0\t\tNONE\t' + tup2_args
+
+                    if tup1 != tup and tup2 != tup:
+                        outfile.write("twohop{}{}{}{}{}{}\n".format(sep, tab_tup1_wargs, sep, tab_tup2_wargs, sep, scp))
+
+
+
+                #if tup_twohop in counter.relgram_map: #make sure this tuple has outgoing nodes
+               # tab_tup_twohop = tup_twohop.replace('|', '\t')
+               # tab_tup_twohop_wargs = tab_tup_twohop + '\t0\t\tNONE\t' + counter.getInstanceString(tup_twohop)
+               # for i in top_twohop:
+               #     relgram = i[0]
+               #     scp = i[1]
+               #     if relgram != tup:
+               #         outfile.write("twohop{}{}{}{}{}{}\n".format(sep, tab_tup_twohop_wargs, sep, relgram.replace('|', '\t') + '\t0\t\tNONE\t' + counter.getInstanceString(relgram), sep, scp))
+
+
+
+#def printTop(counter, tup, filename, twohop=False, k=25):
+#    sep = "_NSEP_"
+#    top = getTopK(counter, tup)
+#    print(top)
+#    with open(filename, 'w') as outfile:
+#        tab_tup = tup.replace('|', '\t')
+
+##        tab_tup_wargs = tab_tup + '\t0\t\tNONE\t' + '\t'.join(counter.relgram_args[tup])
+#        tab_tup_wargs = tab_tup + '\t0\t\tNONE\t' + counter.getInstanceString(tup)
+#        outfile.write("seed" + sep + tab_tup + "\n")
+#
+#        for i in top:
+#            relgram = i[0]
+#            scp = i[1]
+#            outfile.write("onehop{}{}{}{}{}{}\n".format(sep, tab_tup_wargs, sep, relgram.replace('|', '\t') + '\t0\t\tNONE\t' + counter.getInstanceString(relgram), sep, scp))
+#        if twohop:
+#            for i in top[:k]:
+#                tup_twohop = i[0]
+#                #if tup_twohop in counter.relgram_map: #make sure this tuple has outgoing nodes
+#                top_twohop = getTopK(counter, tup_twohop)
+#                tab_tup_twohop = tup_twohop.replace('|', '\t')
+#                tab_tup_twohop_wargs = tab_tup_twohop + '\t0\t\tNONE\t' + counter.getInstanceString(tup_twohop)
+#                for i in top_twohop:
+#                    relgram = i[0]
+#                    scp = i[1]
+#                    if relgram != tup:
+#                        outfile.write("twohop{}{}{}{}{}{}\n".format(sep, tab_tup_twohop_wargs, sep, relgram.replace('|', '\t') + '\t0\t\tNONE\t' + counter.getInstanceString(relgram), sep, scp))
 
 
             
@@ -141,3 +225,11 @@ def printTopNoArgs(counter, tup, filename, twohop=False, k=25):
    
         
     
+if __name__ == "__main__":
+    pfile = sys.argv[1]
+    #counter = pickle.load(open(pfile, 'rb'))
+    relgram_map, relgram_args = json.load(open(pfile,'r'))
+    counter =RelgramCounter(list(range(1,11)), True, relgram_map, relgram_args)
+    seed = sys.argv[2]
+    outfile = sys.argv[3] 
+    printTop(counter,seed, outfile, True)

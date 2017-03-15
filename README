@@ -4,4 +4,5 @@ The middle part of a pipeline to go from plain news text to learned event schema
 This part of the pipeline takes in relation tuples extracted from the first part of the pipeline,
 finds coreference information, and outputs relgram counts.
 
-This README will be updated to be more useful in the near future. We promise. 
+The input to at the start of the pipeline should be a directory containing the tuple documents output from 
+Relation Extractor app
